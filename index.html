@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SuperCheck 🛒</title>
+
+<style>
+
+
+/* 🔹 Fondo oscurecido */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: 0.3s ease-in-out;
+  z-index: 9999;
+}
+
+/* 🔹 Mostrar modal */
+.modal-overlay.show {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* 🔹 Caja del modal */
+.modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 350px;
+  text-align: center;
+}
+
+.modal-content input {
+  width: 90%;
+  padding: 8px;
+  margin-top: 15px;
+  font-size: 18px;
+}
+
+.modal-content button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+
+
+/* 🔹 Estilo del saludo */
+#saludo {
+  font-size: 1.1em;
+  font-weight: normal;
+  margin: 0 10px;
+  color: #0d6efd;
+  text-align: left;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+#reloj {
+  color: #198754;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+
+/* 🔹 Contenedor del cronómetro y botón */
+#contenedorCompras {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+#btnCompras {
+  padding: 8px 15px;
+  font-size: 0.95em;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: #198754;
+  color: white;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+#btnCompras:hover {
+  transform: scale(1.05);
+}
+
+/* 🔹 Ícono del reloj debajo del botón */
+#iconoTiempo {
+  font-size: 1.8em;
+  color: #0d6efd;
+  display: none;
+}
+
+#iconoTiempo.visible {
+  display: block;
+}
+
+#resultadoTiempo {
+  font-size: 0.9em;
+  color: #0d6efd;
+  font-weight: bold;
+  text-align: center;
+}
+
+
+  body {
+    font-family: "Arial", sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 10px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+
+  #iconoHorario {
+    font-size: 1.8em;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  @media (min-width: 768px) {
+    .container {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .tabla-container, .checklist-container {
+      width: 48%;
+    }
+  }
+
+  .tabla-container, .checklist-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 15px;
+  }
+
+  /* 🔹 NUEVO DISEÑO DE TABLAS */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  th {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  tr:hover {
+    background-color: #f1f1f1;
+  }
+
+/* 🔹 Botones de acción */
+.agregar-btn {
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  color: white;
+  background-color: #198754; /* verde */
+}
+
+.agregar-btn:hover {
+  background-color: #157347;
+}
+
+/* 🔹 Íconos sin fondo (Carrito y Devolver) */
+.eliminar-btn {
+  background: none;        /* sin fondo */
+  border: none;            /* sin borde */
+  color: #dc3545;          /* color rojo del ícono */
+  font-size: 1.1em;        /* tamaño un poco mayor */
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+  padding: 4px 6px;
+}
+
+.eliminar-btn:hover {
+  color: #b02a37;          /* tono más oscuro al pasar el mouse */
+  transform: scale(1.2);   /* efecto de zoom sutil */
+}
+
+
+
+
+  .hidden {
+    display: none;
+  }
+
+  input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+  }
+
+  .totales {
+    background-color: #e8f5e9;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  button {
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background-color: #0d6efd;
+    color: white;
+    font-weight: bold;
+    width: 48%;
+  }
+
+  button:hover {
+    background-color: #0b5ed7;
+  }
+
+  .botones {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  
+  /* 🔹 Presupuesto flotante */
+#presupuesto-flotante {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background-color: #198754; /* verde por defecto */
+  color: white;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1.5em;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  z-index: 999;
+  transition: background-color 0.3s ease;
+}
+/* 🔍 Diseño del buscador */
+.buscar-container {
+  position: relative;
+  width: 80%;
+  max-width: 400px;
+  margin: 0 auto 15px auto;
+}
+
+.buscar-container input {
+  width: 100%;
+  padding: 10px 40px 10px 12px; /* deja espacio para la x */
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: border-color 0.3s ease;
+}
+
+.buscar-container input:focus {
+  outline: none;
+  border-color: #0d6efd;
+}
+
+.buscar-container button {
+  position: absolute;
+  top: 50%;
+  right: 1px;
+  transform: translateY(-50%);
+  display: none; /* oculto por defecto */
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: none;
+  color: #777;
+  font-size: 0.9em;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.25s ease;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.buscar-container button:hover {
+  background-color: #dc3545; /* círculo rojo */
+  color: #fff;
+  transform: translateY(-50%) scale(1.1);
+}
+
+
+
+.page-break {
+  display: block;
+  page-break-before: always;
+}
+
+
+
+/* 🔹 Estilos del modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.modal-content h3 {
+  color: #0d6efd;
+  margin-bottom: 15px;
+}
+
+.close {
+  float: right;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #000;
+}
+
+/* 🔹 Botones dentro del modal */
+.modal-botones {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.modal-botones button {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.btn-pdf {
+  background-color: #0d6efd;
+}
+
+.btn-pdf:hover {
+  background-color: #0b5ed7;
+  transform: scale(1.05);
+}
+
+.btn-json {
+  background-color: #198754;
+}
+
+.btn-json:hover {
+  background-color: #157347;
+  transform: scale(1.05);
+}
+
+/* ✨ Animación al agregar producto */
+@keyframes agregarProductoAnim {
+  0% {
+    background-color: #d1e7dd; /* verde claro */
+  }
+  50% {
+    background-color: #a3cfbb; /* tono más fuerte */
+  }
+  100% {
+    background-color: transparent; /* vuelve al fondo normal */
+  }
+}
+
+/* Clase que activa la animación */
+.fila-agregada {
+  animation: agregarProductoAnim 0.8s ease;
+}
+
+/* 🔹 Botón Nuevo Producto */
+.nuevo-producto-btn {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto 20px auto;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.nuevo-producto-btn:hover {
+  background-color: #0b5ed7;
+  transform: scale(1.05);
+}
+
+#btnJorgito:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 10px rgba(255,165,0,0.6);
+  transition: all 0.3s ease;
+}
+
+#btnMayu:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 10px rgba(255,105,180,0.6);
+  transition: all 0.3s ease;
+}
+
+
+
+
+/* En pantalla, ocultamos el header de impresión */
+#headerImpresion {
+    display: none;
+}
+
+/* ✅ IMPRESIÓN – BLOQUE ÚNICO */
+/* ===========================================
+   IMPRESIÓN LIMPIA — SOLO ENCABEZADO + TABLA
+   =========================================== */
+@media print {
+
+  /* ---- OCULTAR TODO LO QUE NO DEBE IMPRIMIRSE ---- */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* ---- MOSTRAR SOLO ESTOS ELEMENTOS ---- */
+  #headerImpresion,
+  #tablaChecklist,
+  #tablaChecklist * {
+    visibility: visible !important;
+  }
+
+  /* ---- POSICIONAR EL ÁREA DE IMPRESIÓN ---- */
+  #headerImpresion {
+    display: block !important;
+    position: absolute;
+    top: 10px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ---- TABLA CENTRADA DEBAJO DEL ENCABEZADO ---- */
+  #tablaChecklist {
+    position: absolute;
+    top: 140px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90% !important;
+    border-collapse: collapse !important;
+    font-size: 14px;
+  }
+
+  /* ---- ENCABEZADO DE LA TABLA ---- */
+  #tablaChecklist thead th {
+    background: #000 !important;
+    color: #fff !important;
+    border: 1px solid #000 !important;
+  }
+
+  /* ---- BORDES DE TABLA ---- */
+  #tablaChecklist td,
+  #tablaChecklist th {
+    border: 1px solid #000 !important;
+    padding: 6px !important;
+  }
+
+  /* ---- MOSTRAR SOLO COLUMNAS REQUERIDAS (# PRODUCTO PRECIO Q) ---- */
+  #tablaChecklist th:nth-child(5),
+  #tablaChecklist td:nth-child(5),
+  #tablaChecklist th:nth-child(6),
+  #tablaChecklist td:nth-child(6) {
+    display: none !important;
+  }
+
+  /* ---- EVITAR QUE LA TABLA SE CORTE ENTRE HOJAS ---- */
+  table, tr, td, th {
+    page-break-inside: avoid !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tfoot {
+    display: table-footer-group !important;
+  }
+}
+
+
+
+
+
+</style>
+
+
+  
+</style>
+
+
+
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d6efd">
+</head>
+<body>
+<div id="headerImpresion">
+    <h2 id="tituloImpresion"></h2>
+    <p id="fechaImpresion"></p>
+    <h3 id="totalImpresion"></h3>
+</div>
+
+
+
+<!-- 🔹 Vista previa (pantalla inicial tipo login) -->
+<div id="vista-previa" style="
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  font-family: 'Segoe UI', sans-serif;
+">
+  <h2 style="margin-bottom: 30px; color:#333;"><strong>¿Quién hará la lista?</strong></h2>
+  <div style="display:flex; gap: 20px;">
+    <button id="btnJorgito" style="
+      background-color: orange;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      font-weight: bold;
+    ">JORGITO</button>
+
+    <button id="btnMayu" style="
+      background-color: hotpink;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      font-weight: bold;
+    ">MAYU</button>
+  </div>
+</div>
+
+
+
+
+<header>
+  <span id="iconoHorario"></span>
+  <span id="saludo"></span>
+
+  
+</header>
+
+<div id="presupuesto-flotante">
+💰C$<span id="presupuesto">1500</span>
+</div>
+
+
+<div class="buscar-container">
+  <input type="text" id="buscar" oninput="buscarProducto()" placeholder="Buscar producto...">
+  <button id="clearSearch" title="Borrar búsqueda">X</button>
+</div>
+<div id="msgNoResultados" style="display:none; font-weight:bold; color:red; margin-top:5px; text-align:center;">
+  ❌ Producto no listado. Si deseas agregarlo, presione "Nuevo producto" 
+</div>
+<div> &nbsp </div>
+
+<button id="btnNuevoProducto" class="nuevo-producto-btn">➕ Nuevo Producto</button>
+
+
+
+<div class="container">
+  <div class="tabla-container">
+   <h3 style="display:flex; justify-content:space-between; align-items:center;">
+
+  <button onclick ="mostrarTabla()"> INICIAR LISTADO </button>
+
+</h3>
+   
+    <table id="tablaProductos" class="hidden">
+      <thead>
+        <tr><th>Producto</th><th>Precio</th><th>Listar</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+	  <button id="btnFinalizar" 
+        onclick="finalizarListado()" 
+        style="display:none; margin-top:10px;">
+     FINALIZAR LISTADO
+   </button>
+  </div>
+  
+
+
+
+  <div class="checklist-container">
+  
+      <div id="contenedorCompras">
+  <button id="btnCompras">Iniciar Compras</button>
+  <div id="iconoTiempo" class="hidden">⏱️</div>
+  <div id="resultadoTiempo"></div>
+</div>
+  
+  <div id="contenedorListaCompras">
+    <h3>Lista de Compras
+	<span style="font-size:1.2em; color:#0d6efd; margin-left:10px;">
+    Total: C$ <span id="totalChecklist">0</span>
+  </span>
+	</h3>
+    <table id="tablaChecklist">
+      <thead>
+        <tr><th>#</th>
+		<th>Producto</th>
+		<th>Precio</th>
+		<th>Q</th>
+		<th>Carrito</th>
+		<th>Borrar</th>
+		</tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+	</div>
+
+<div class="botones">
+  <button onclick="abrirModalExportar()">📤 Guardar Lista</button>
+  <input type="file" id="importarArchivo" accept=".json" onchange="importarListado(event)" style="display:none;">
+  <button onclick="document.getElementById('importarArchivo').click()">📂 Subir Lista</button>
+</div>
+
+  </div>
+  
+  <div class="checklist-container">
+      <h3>Carrito de Compras
+	<span style="font-size:1.2em; color:#0d6efd; margin-left:10px;">
+    Total: C$<span id="totalCarrito">0</span>
+  </span>
+	</h3>
+  <table id="tablaCarrito">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Producto</th>
+        <th>Precio</th>
+		<th>Q</th>
+		<th>Retirar</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+  
+  
+</div>
+
+
+<!-- 🔹 Modal de Presupuesto Inicial -->
+<div id="modalPresupuesto" class="modal-overlay">
+  <div class="modal-content">
+    <h2>¿Con cuánto dinero dispones hoy para las compras?</h2>
+
+    <input 
+      type="number" 
+      id="inputPresupuestoInicial" 
+      placeholder="Digita el presupuesto" 
+      min="0"
+    />
+
+    <button id="btnGuardarPresupuesto">Confirmar</button>
+  </div>
+</div>
+
+<!-- 🔹 Modal de Exportación -->
+<div id="modalExportar" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="cerrarModalExportar()">&times;</span>
+    <h3>¿Cómo quieres guardar la Lista de Compras?</h3>
+    <div class="modal-botones">
+      <button class="btn-pdf" onclick="exportarPDF(); cerrarModalExportar();">📄 Lista Final </button>
+      <button class="btn-json" onclick="exportarJSON(); cerrarModalExportar();">💾 Lista Temporal</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 🔹 Modal Nuevo Producto -->
+<div id="modalNuevoProducto" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="cerrarModalNuevoProducto()">&times;</span>
+    <h3>Agregar nuevo producto</h3>
+    <input type="text" id="nuevoNombre" placeholder="Nombre del producto" />
+    <input type="number" id="nuevoPrecio" placeholder="Precio (C$)" min="1" />
+    <div class="modal-botones">
+      <button class="btn-json" onclick="agregarNuevoProducto()">Agregar</button>
+      <button class="btn-pdf" onclick="cerrarModalNuevoProducto()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Encabezado especial para impresión -->
+<div id="headerImpresion">
+    <h2 id="impNombre"></h2>
+    <p id="impFecha"></p>
+    <h3>Lista de Compras — Total: <span id="impTotal"></span></h3>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+
+
+<script>
+let usuarioActivo = "";
+
+document.getElementById("btnJorgito").addEventListener("click", function() {
+  usuarioActivo = "JORGITO";
+  iniciarPagina();
+});
+
+document.getElementById("btnMayu").addEventListener("click", function() {
+  usuarioActivo = "MAYU";
+  iniciarPagina();
+});
+
+
+function iniciarPagina() {
+  document.getElementById("vista-previa").style.display = "none"; // Oculta pantalla inicial
+  actualizarSaludo(); // Muestra el saludo personalizado
+  setInterval(actualizarSaludo, 1000); // Actualiza cada segundo
+}
+
+
+// 🔹 Saludo con estructura personalizada
+function actualizarSaludo() {
+  const ahora = new Date();
+  const hora = ahora.getHours();
+  const icono = document.getElementById("iconoHorario");
+  const saludo = document.getElementById("saludo");
+
+  // Determinar icono y mensaje según hora
+  let iconoTexto = "";
+  let mensaje = "";
+
+  if (hora >= 5 && hora < 12) {
+    iconoTexto = "☀️";
+    mensaje = "Buenos días!";
+  } else if (hora >= 12 && hora < 18) {
+    iconoTexto = "🌤️";
+    mensaje = "Buenas tardes!";
+  } else {
+    iconoTexto = "🌙";
+    mensaje = "Buenas noches!";
+  }
+
+  // Obtener fecha formateada (miércoles, 22 de octubre de 2025)
+  const opcionesFecha = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+  const fechaActual = ahora.toLocaleDateString('es-ES', opcionesFecha);
+
+  // Obtener hora actual (hh:mm:ss)
+  const horas = ahora.getHours().toString().padStart(2, "0");
+  const minutos = ahora.getMinutes().toString().padStart(2, "0");
+  const segundos = ahora.getSeconds().toString().padStart(2, "0");
+  const horaActual = `${horas}:${minutos}:${segundos}`;
+
+  // Mostrar todo en tres líneas
+  saludo.innerHTML = `
+    <div style="text-align:left;">
+	${iconoTexto}
+	<span style="color:${usuarioActivo === 'JORGITO' ? 'orange' : 'hotpink'}; font-weight:bold;">
+    ${usuarioActivo}
+    </span>,
+  ${mensaje}
+</div>
+
+    <div style="text-align:left;"color:blue; font-size:0.95em;">${fechaActual}</div>
+    <div id="reloj" style="text-align:left;color:#198754; font-weight:bold;">${horaActual}</div>
+  `;
+}
+
+// 🔁 Actualizar cada segundo
+setInterval(actualizarSaludo, 1000);
+actualizarSaludo();
+
+
+
+  // Lista de productos
+const productos = [
+  {product: "Queso frescal", price: 90},
+  {product: "Crema", price: 30},
+  {product: "Arrocera", price: 690},
+  {product: "Cubiertos", price: 220},
+  {product: "Sartén", price: 500},
+  {product: "Taza", price: 200},
+  {product: "Termo", price: 460},
+  {product: "Cloro", price: 60},
+  {product: "Jabón de baño", price: 50},
+  {product: "Jabón lavaplatos", price: 150},
+  {product: "Asistín", price: 180},
+  {product: "Detergente líquido", price: 100},
+  {product: "Detergente en polvo", price: 180},
+  {product: "Bolsa de basura Mediana", price: 100},
+  {product: "Bolsa de basura Grande", price: 70},
+  {product: "Atrapa moscas", price: 30},
+  {product: "Atrapa ratones", price: 30},
+  {product: "Ambientador Glade", price: 160},
+  {product: "Insecticida Baygon", price: 180},
+  {product: "Papel Higiénico", price: 400},
+  {product: "Servilletas", price: 90},
+  {product: "Papel Toalla", price: 40},
+  {product: "Papel Aluminio", price: 50},
+  {product: "Bolsa Ziploc", price: 170},
+  {product: "Sal", price: 20},
+  {product: "Arroz", price: 150},
+  {product: "Aceite", price: 72},
+  {product: "Azúcar", price: 70},
+  {product: "Avena", price: 100},
+  {product: "Café", price: 300},
+  {product: "Galletas", price: 100},
+  {product: "Pan de molde", price: 85},
+  {product: "Pan Hamburguesa", price: 70},
+  {product: "Mermelada", price: 70},
+  {product: "Maruchán", price: 40},
+  {product: "Frijoles molidos", price: 40},
+  {product: "Harina Maseca", price: 35},
+  {product: "Harina Pancake", price: 130},
+  {product: "Miel Pancake", price: 110},
+  {product: "Corn Flakes", price: 120},
+  {product: "Snacks Mix", price: 230},
+  {product: "Helado", price: 300},
+  {product: "Papas Fritas", price: 200},
+  {product: "Yogurt", price: 110},
+  {product: "Leche", price: 50},
+  {product: "Mantequilla", price: 70},
+  {product: "Margarina", price: 100},
+  {product: "Jugo de Naranja", price: 130},
+  {product: "Chiltoma", price: 60},
+  {product: "Cebolla", price: 40},
+  {product: "Ajo", price: 130},
+  {product: "Perejil", price: 25},
+  {product: "Orégano", price: 26},
+  {product: "Lechuga", price: 30},
+  {product: "Pepino", price: 50},
+  {product: "Tomate", price: 50},
+  {product: "Limón", price: 80},
+  {product: "Hierbabuena", price: 20},
+  {product: "Cilantro", price: 30},
+  {product: "Apio", price: 20},
+  {product: "Zanahoria", price: 20},
+  {product: "Melón", price: 50},
+  {product: "Piña", price: 80},
+  {product: "Sandía", price: 50},
+  {product: "Manzanas", price: 200},
+  {product: "Papaya", price: 80},
+  {product: "Aguacate", price: 20},
+  {product: "Papas", price: 50},
+  {product: "Plátano", price: 20},
+  {product: "Gengibre", price: 60},
+  {product: "Res", price: 165},
+  {product: "Cerdo", price: 110},
+  {product: "Pollo", price: 140},
+  {product: "Mortadela", price: 110},
+  {product: "Chorizo Criollo", price: 60},
+  {product: "Salchicha", price: 120},
+  {product: "Alitas picantes", price: 300},
+  {product: "Tortas de Hamburguesa", price: 300},
+  {product: "Huevos", price: 100},
+  {product: "Gaseosa", price: 200},
+  {product: "Frescos instantáneos", price: 100},
+  {product: "Cerveza Toña", price: 40},
+  {product: "Cerveza Victoria Clásica", price: 40},
+  {product: "Cerveza Heineken", price: 40},
+  {product: "Cerveza Bliss", price: 60},
+  {product: "Coctel Bambú", price: 50},
+  {product: "Pasta dental", price: 170},
+  {product: "Cepillo dental", price: 100},
+  {product: "Desodorante Masculino", price: 80},
+  {product: "Desodorante Femenino", price: 90},
+  {product: "Toalla Femenina", price: 60},
+  {product: "Enjuague Bucal", price: 300},
+  {product: "Afeitadores Masculinos", price: 330},
+  {product: "Afeitadores Femeninos", price: 270},
+  {product: "Chocolate Reese", price: 85}
+];
+
+  const tablaProductos = document.getElementById("tablaProductos").querySelector("tbody");
+  const tablaChecklist = document.getElementById("tablaChecklist").querySelector("tbody");
+  const tablaCarrito = document.getElementById("tablaCarrito").querySelector("tbody");
+
+  const buscar = document.getElementById("buscar");
+  let total = 0, presupuesto = 1500, contador = 1;
+
+  function mostrarProductos(lista) {
+    tablaProductos.innerHTML = "";
+    lista.forEach(p => {
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+        <td>${p.product}</td>
+        <td>C$${p.price}</td>
+    	<td><button class="agregar-btn">+</button></td>
+      `;
+     
+fila.querySelector(".agregar-btn").addEventListener("click", () => {
+
+ // ✅ Primero validar si ya existe en la lista de compras
+  if (productoYaEnLista(p.product)) {
+    alert("⚠️ El producto que intentas agregar ya está en tu lista de compras. Favor verifica.");
+    return;
+  }
+
+
+  // ✨ Animar la fila de la lista general
+  fila.classList.add("fila-agregada");
+  setTimeout(() => fila.classList.remove("fila-agregada"), 1000);
+  
+  // Luego agregar a la lista de compras
+  agregarProducto(p);
+});
+
+
+
+      tablaProductos.appendChild(fila);
+    });
+  }
+
+function agregarProducto(p, cantidad = 1) {
+  const fila = document.createElement("tr");
+  fila.innerHTML = `
+    <td>${contador++}</td>
+    <td>${p.product}</td>
+    <td>C$${(p.price * cantidad).toFixed(0)}</td>
+    <td><input type="number" class="cantidad" value="${cantidad}" min="1" style="width:50px;"></td>
+    <td><button class="eliminar-btn">🛒</button></td>
+    <td><button class="eliminar-btn">❎</button></td>
+  `;
+
+  const inputCantidad = fila.querySelector(".cantidad");
+  const precioCelda = fila.children[2];
+
+  // ✏️ Volver a habilitar edición de precio
+  precioCelda.style.cursor = "pointer";
+  precioCelda.title = "Haz clic para editar el precio";
+  precioCelda.addEventListener("click", () => {
+    const totalActual = parseFloat(precioCelda.textContent.replace("C$", "").trim());
+    const nuevoPrecio = prompt("Ingrese el nuevo precio para este producto:", p.price);
+
+    if (nuevoPrecio !== null && !isNaN(nuevoPrecio) && nuevoPrecio > 0) {
+      const diferencia = nuevoPrecio * parseInt(inputCantidad.value) - totalActual;
+      p.price = parseFloat(nuevoPrecio);
+
+      precioCelda.textContent = `C$${(p.price * parseInt(inputCantidad.value)).toFixed(0)}`;
+
+      total += diferencia;
+      presupuesto -= diferencia;
+      document.getElementById("presupuesto").textContent = presupuesto;
+      actualizarTotalChecklist(diferencia);
+      actualizarColorPresupuesto();
+    }
+  });
+
+  // ✨ Actualizar total al cambiar cantidad
+  inputCantidad.addEventListener("input", () => {
+    let q = parseInt(inputCantidad.value);
+    if (isNaN(q) || q < 1) { q = 1; inputCantidad.value = 0; }
+
+    const totalPrevio = parseFloat(precioCelda.textContent.replace("C$", "").trim());
+    const nuevoTotal = p.price * q;
+    const diferencia = nuevoTotal - totalPrevio;
+
+    precioCelda.textContent = `C$${nuevoTotal.toFixed(0)}`;
+
+    total += diferencia;
+    presupuesto -= diferencia;
+    document.getElementById("presupuesto").textContent = presupuesto;
+    actualizarTotalChecklist(diferencia);
+    actualizarColorPresupuesto();
+  });
+  
+  const botones = fila.querySelectorAll("button");
+
+  // Botón Carrito
+  const btnCarrito = botones[0];
+  btnCarrito.addEventListener("click", () => {
+    const q = parseInt(inputCantidad.value);
+    const totalFila = parseFloat(precioCelda.textContent.replace("C$", "").trim());
+    
+    fila.remove();
+    total -= totalFila;
+    presupuesto += totalFila;
+    document.getElementById("presupuesto").textContent = presupuesto;
+    actualizarTotalChecklist(-totalFila);
+    actualizarColorPresupuesto();
+
+    agregarAlCarrito(p, q);
+  });
+
+  // Botón ❎
+  const btnDevolver = botones[1];
+  btnDevolver.addEventListener("click", () => {
+    const q = parseInt(inputCantidad.value);
+    const totalFila = parseFloat(precioCelda.textContent.replace("C$", "").trim());
+    
+    fila.remove();
+	
+
+	
+    total -= totalFila;
+    presupuesto += totalFila;
+	
+    document.getElementById("presupuesto").textContent = presupuesto;
+    actualizarTotalChecklist(-totalFila);
+    actualizarColorPresupuesto();
+
+  
+	actualizarTotalCarrito();
+
+  });
+
+  tablaChecklist.appendChild(fila);
+
+  total += p.price * cantidad;
+  presupuesto -= p.price * cantidad;
+  document.getElementById("presupuesto").textContent = presupuesto;
+  actualizarTotalChecklist(p.price * cantidad);
+  actualizarColorPresupuesto();
+}
+
+
+let contadorCarrito = 1;
+// Función para carrito
+function agregarAlCarrito(p, cantidad = 1) {
+  const fila = document.createElement("tr");
+  fila.innerHTML = `
+    <td>${contador++}</td>
+    <td>${p.product}</td>
+    <td class="precio-carrito">C$${(p.price * cantidad).toFixed(0)}</td>
+    <td><input type="number" class="cantidad" value="${cantidad}" min="1" style="width:50px;"></td>
+    <td><button class="eliminar-btn">❎</button></td>
+  `;
+
+  const inputCantidad = fila.querySelector(".cantidad");
+  const precioCelda = fila.children[2];
+
+  inputCantidad.addEventListener("input", () => {
+    let q = parseInt(inputCantidad.value);
+    if (isNaN(q) || q < 1) {
+      q = 1;
+      inputCantidad.value = 0;
+    }
+
+    const totalPrevio = parseFloat(precioCelda.textContent.replace("C$", "").trim());
+    const nuevoTotal = p.price * q;
+    const diferencia = nuevoTotal - totalPrevio;
+
+    precioCelda.textContent = `C$${nuevoTotal.toFixed(0)}`;
+
+    total += diferencia;
+    presupuesto -= diferencia;
+    document.getElementById("presupuesto").textContent = presupuesto;
+    actualizarTotalChecklist(diferencia);
+    actualizarColorPresupuesto();
+	actualizarTotalCarrito();
+
+  });
+
+  // Botón ❎ devuelve a lista de compras
+  const btnDevolver = fila.querySelector(".eliminar-btn");
+  btnDevolver.addEventListener("click", () => {
+    const q = parseInt(inputCantidad.value);
+    const totalFila = parseFloat(precioCelda.textContent.replace("C$", "").trim());
+
+    fila.remove();
+    total -= totalFila;
+    presupuesto += totalFila;
+    document.getElementById("presupuesto").textContent = presupuesto;
+    actualizarTotalChecklist(-totalFila);
+    actualizarColorPresupuesto();
+
+    agregarProducto(p, q);
+	actualizarTotalCarrito();
+  });
+
+  tablaCarrito.appendChild(fila);
+
+  total += p.price * cantidad;
+  presupuesto -= p.price * cantidad;
+  document.getElementById("presupuesto").textContent = presupuesto;
+  actualizarTotalChecklist(p.price * cantidad);
+  actualizarColorPresupuesto();
+  
+  actualizarTotalCarrito();
+
+}
+
+
+
+
+
+  buscar.addEventListener("input", () => {
+    const texto = buscar.value.toLowerCase();
+    if (texto.length < 2) return mostrarProductos(productos);
+    const filtrado = productos.filter(p => p.product.toLowerCase().includes(texto));
+    mostrarProductos(filtrado);
+  });
+
+function exportarPDF() {
+
+  // ============================================================
+  // 1. Crear encabezado limpio para el PDF (nombre + fecha + total)
+  // ============================================================
+  const encabezado = document.createElement("div");
+  encabezado.style.textAlign = "center";
+  encabezado.style.marginBottom = "20px";
+  encabezado.style.fontFamily = "Arial";
+
+  // Nombre del usuario
+  const nombre = document.createElement("h2");
+  nombre.textContent = `${usuarioActivo}, tu lista de compras:`;
+  encabezado.appendChild(nombre);
+
+  // Fecha larga con hora
+  const fecha = new Date();
+  const opciones = {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  };
+  const fechaTxt = document.createElement("p");
+  fechaTxt.textContent = fecha.toLocaleDateString("es-ES", opciones);
+  encabezado.appendChild(fechaTxt);
+
+  // Total final
+  const totalTxt = document.createElement("h3");
+  const totalReal = document.getElementById("totalChecklist").textContent;
+  totalTxt.textContent = `Lista de Compras — Total: ${totalReal}`;
+  encabezado.appendChild(totalTxt);
+
+  // ============================================================
+  // 2. Clonamos solo la sección de la tabla
+  // ============================================================
+  const original = document.querySelector(".checklist-container");
+  const clon = original.cloneNode(true);
+
+  // Limpiar títulos duplicados
+  const tituloDoble = clon.querySelector("h3");
+  if (tituloDoble) tituloDoble.remove();
+
+  // ============================================================
+  // 3. Crear wrapper final para impresión
+  // ============================================================
+  const wrapper = document.createElement("div");
+  wrapper.style.textAlign = "center";
+  wrapper.style.padding = "20px";
+  wrapper.style.width = "100%";
+
+  wrapper.appendChild(encabezado); // insertamos encabezado limpio
+  wrapper.appendChild(clon);       // insertamos la tabla
+
+  // ============================================================
+  // 4. Limpiar tabla del clon
+  // ============================================================
+  // Ocultar columnas Carrito y Borrar
+  clon.querySelectorAll(
+    "th:nth-child(5), th:nth-child(6), td:nth-child(5), td:nth-child(6)"
+  ).forEach(el => el.style.display = "none");
+
+  // Quitar botones dentro de la tabla
+  clon.querySelectorAll("button").forEach(btn => btn.remove());
+
+  // Quitar buscadores o mensajes
+  const buscador = clon.querySelector(".buscar-container");
+  if (buscador) buscador.remove();
+
+  // Quitar contenedor de botones
+  const botones = clon.querySelector(".botones");
+  if (botones) botones.remove();
+
+  // Quitar contenedor de cronómetro
+  const cronometro = clon.querySelector("#contenedorCompras");
+  if (cronometro) cronometro.remove();
+
+  // Quitar total superior (ya lo generamos nosotros)
+  const totalesArriba = clon.querySelector("h3");
+  if (totalesArriba) totalesArriba.remove();
+
+  // Ajustar tabla para multipáginas
+  clon.querySelectorAll("table, tr, td, th").forEach(el => {
+    el.style.pageBreakInside = "avoid";
+    el.style.fontSize = "14px";
+  });
+
+  // ============================================================
+  // 5. Insertar wrapper temporal en el body
+  // ============================================================
+  document.body.appendChild(wrapper);
+
+  // ============================================================
+  // 6. Configuración html2pdf
+  // ============================================================
+  const opt = {
+    margin: 10,
+    filename: "Checklist_SuperCheck.pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollY: 0,
+      windowWidth: document.body.scrollWidth
+    },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    pagebreak: { mode: ["css", "legacy"] }
+  };
+
+  // ============================================================
+  // 7. Generar PDF y limpiar wrapper
+  // ============================================================
+  html2pdf()
+    .set(opt)
+    .from(wrapper)
+    .save()
+    .then(() => {
+      wrapper.remove();
+    })
+    .catch(err => {
+      console.error("Error al generar PDF:", err);
+      wrapper.remove();
+    });
+}
+
+
+
+
+
+
+
+
+function exportarJSON() {
+  const filas = document.querySelectorAll("#tablaChecklist tbody tr");
+  const datos = [];
+
+  filas.forEach(fila => {
+    const celdas = fila.querySelectorAll("td");
+    if (celdas.length >= 3) {
+      const producto = celdas[1].textContent.trim();
+      const precio = parseFloat(celdas[2].textContent.replace("C$", "").trim());
+      datos.push({ product: producto, price: precio });
+    }
+  });
+
+  const blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
+  const enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(blob);
+  enlace.download = "Checklist_SuperCheck.json";
+  enlace.click();
+}
+
+
+
+
+  function importarListado(e) {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    const lector = new FileReader();
+    lector.onload = function(evt) {
+      const data = JSON.parse(evt.target.result);
+      data.forEach(p => agregarProducto(p));
+    };
+    lector.readAsText(archivo);
+  }
+  
+  function actualizarTotalChecklist(cambio) {
+  const totalElem = document.getElementById("totalChecklist");
+  let valorActual = parseFloat(totalElem.textContent) || 0;
+  valorActual += cambio;
+  if (valorActual < 0) valorActual = 0;
+  totalElem.textContent = valorActual.toFixed(2);
+}
+
+function actualizarColorPresupuesto() {
+  const presupuestoElem = document.getElementById("presupuesto-flotante");
+  const valor = parseFloat(document.getElementById("presupuesto").textContent);
+  if (valor < 0) {
+    presupuestoElem.style.backgroundColor = "#dc3545"; // rojo
+    presupuestoElem.style.color = "white";
+  } else {
+    presupuestoElem.style.backgroundColor = "#198754"; // verde
+    presupuestoElem.style.color = "white";
+  }
+}
+
+// 🔹 Funcionalidad del botón ❌ para limpiar búsqueda
+const inputBuscar = document.getElementById("buscar");
+const clearBtn = document.getElementById("clearSearch");
+
+inputBuscar.addEventListener("input", () => {
+clearBtn.style.display = inputBuscar.value.trim().length > 0 ? "flex" : "none";
+
+});
+
+clearBtn.addEventListener("click", () => {
+  inputBuscar.value = "";
+  clearBtn.style.display = "none";
+  mostrarProductos(productos); // recargar lista completa
+  inputBuscar.focus();
+});
+
+
+// 🔁 Ejecutar cada vez que se actualiza el presupuesto
+const oldActualizarTotales = actualizarTotalChecklist;
+actualizarTotalChecklist = function(cambio) {
+  oldActualizarTotales(cambio);
+  actualizarColorPresupuesto();
+};
+
+
+  mostrarProductos(productos);
+  actualizarColorPresupuesto();
+  
+
+// 🔹 Cronómetro de Compras
+let inicioTiempo = null;
+const btnCompras = document.getElementById("btnCompras");
+const iconoTiempo = document.getElementById("iconoTiempo");
+const resultadoTiempo = document.getElementById("resultadoTiempo");
+
+btnCompras.addEventListener("click", () => {
+  if (!inicioTiempo) {
+    // 🟢 Iniciar compras
+    inicioTiempo = new Date();
+    btnCompras.textContent = "Finalizar Compras";
+    btnCompras.style.backgroundColor = "#dc3545"; // rojo
+    iconoTiempo.classList.remove("visible");
+    resultadoTiempo.textContent = "";
+  } else {
+    // 🔴 Finalizar compras
+    const finTiempo = new Date();
+    const diffMs = finTiempo - inicioTiempo;
+    inicioTiempo = null;
+
+    const horas = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const segundos = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+    // Mostrar debajo del botón ⏱️ y luego el mensaje
+    iconoTiempo.classList.add("visible");
+    resultadoTiempo.textContent = `Tu tiempo de compras fue de: ${horas} hr, ${minutos} min y ${segundos} seg.`;
+
+    btnCompras.textContent = "Iniciar Compras";
+    btnCompras.style.backgroundColor = "#198754"; // verde
+  }
+});
+
+
+// 🔹 Modal de Exportación
+function abrirModalExportar() {
+  document.getElementById("modalExportar").style.display = "block";
+}
+
+function cerrarModalExportar() {
+  document.getElementById("modalExportar").style.display = "none";
+}
+
+// 🔹 Cerrar modal si se hace clic fuera del contenido
+window.addEventListener("click", function(e) {
+  const modal = document.getElementById("modalExportar");
+  if (e.target === modal) {
+    cerrarModalExportar();
+  }
+});
+
+
+// 🔹 Modal Nuevo Producto
+const modalNuevoProducto = document.getElementById("modalNuevoProducto");
+const btnNuevoProducto = document.getElementById("btnNuevoProducto");
+
+btnNuevoProducto.addEventListener("click", () => {
+  modalNuevoProducto.style.display = "block";
+});
+
+function cerrarModalNuevoProducto() {
+  modalNuevoProducto.style.display = "none";
+  document.getElementById("nuevoNombre").value = "";
+  document.getElementById("nuevoPrecio").value = "";
+}
+
+// Cerrar si se hace clic fuera del modal
+window.addEventListener("click", (e) => {
+  if (e.target === modalNuevoProducto) cerrarModalNuevoProducto();
+});
+
+// 🔹 Agregar nuevo producto directamente a la lista de compras
+function agregarNuevoProducto() {
+  const nombre = document.getElementById("nuevoNombre").value.trim();
+  const precio = parseFloat(document.getElementById("nuevoPrecio").value);
+
+  if (!nombre || isNaN(precio) || precio <= 0) {
+    alert("Por favor ingresa un nombre y un precio válidos.");
+    return;
+  }
+
+  const nuevoProd = { product: nombre, price: precio };
+  agregarProducto(nuevoProd);
+  cerrarModalNuevoProducto();
+}
+
+
+
+function mostrarTabla() {
+    const tabla = document.getElementById("tablaProductos");
+    const btnFinalizar = document.getElementById("btnFinalizar");
+
+    tabla.style.display = "block";     // Mostrar tabla
+    btnFinalizar.style.display = "inline-block"; // Mostrar botón finalizar
+}
+
+function finalizarListado() {
+    const tabla = document.getElementById("tablaProductos");
+    const btnFinalizar = document.getElementById("btnFinalizar");
+
+    tabla.style.display = "none";      // Ocultar tabla
+    btnFinalizar.style.display = "none"; // Ocultar botón finalizar
+}
+  
+  
+// Función para crear o actualizar la fila de total en el carrito
+function actualizarTotalCarrito() {
+  let totalCarrito = 0;
+
+  document.querySelectorAll("#tablaCarrito tr").forEach(fila => {
+    const precioCelda = fila.querySelector(".precio-carrito");
+    if (!precioCelda) return;
+
+    let precio = parseFloat(precioCelda.textContent.replace("C$", "").trim());
+    if (!isNaN(precio)) totalCarrito += precio;
+  });
+
+  document.getElementById("totalCarrito").textContent = `C$${totalCarrito.toFixed(0)}`;
+}
+
+
+function buscarProducto() {
+  const input = document.getElementById("buscar");
+  const filtro = input.value.toLowerCase().trim();
+  const tabla = document.getElementById("tablaProductos");
+  const filas = tabla.querySelectorAll("tbody tr");
+  const msg = document.getElementById("msgNoResultados"); // ✅
+
+  let coincidencias = 0;
+
+  filas.forEach(fila => {
+    const celdas = fila.getElementsByTagName("td");
+    const texto = Array.from(celdas).map(td => td.textContent.toLowerCase()).join(" ");
+    
+    if (texto.includes(filtro)) {
+      fila.style.display = "";
+      coincidencias++;
+    } else {
+      fila.style.display = "none";
+    }
+  });
+
+  // ✅ Mostrar tabla si hay coincidencias
+  if (filtro !== "" && coincidencias > 0) {
+    tabla.style.display = "table";
+    document.getElementById("btnFinalizar").style.display = "block";
+  }
+
+  // ✅ Restablecer cuando buscador está vacío
+  if (filtro === "") {
+    filas.forEach(fila => fila.style.display = "");
+    msg.style.display = "none"; // ✅ oculta mensaje
+    return;
+  }
+
+  // ✅ Mostrar mensaje si NO hubo coincidencias
+  if (coincidencias === 0) {
+    msg.style.display = "block";
+    tabla.style.display = "none"; // oculta tabla al no encontrar nada
+  } else {
+    msg.style.display = "none";
+  }
+}
+
+  
+function productoYaEnLista(nombreProducto) {
+  const filas = tablaChecklist.querySelectorAll("tr");
+
+  for (let fila of filas) {
+    const nombre = fila.children[1].textContent.trim().toLowerCase();
+    if (nombre === nombreProducto.toLowerCase()) {
+      return true;
+    }
+  }
+  return false;
+}  
+
+
+
+
+  
+// 🔹 Mostrar modal al cargar la página
+window.addEventListener("DOMContentLoaded", function () {
+  const modal = document.getElementById("modalPresupuesto");
+  modal.classList.add("show");
+});
+
+// 🔹 Guardar presupuesto inicial
+document.getElementById("btnGuardarPresupuesto").addEventListener("click", function () {
+  const input = document.getElementById("inputPresupuestoInicial");
+  const valor = parseFloat(input.value);
+
+  if (!isNaN(valor) && valor >= 0) {
+    presupuesto = valor;
+    document.getElementById("presupuesto").textContent = presupuesto;
+    actualizarColorPresupuesto();
+    document.getElementById("modalPresupuesto").classList.remove("show");
+  } else {
+    alert("Ingrese un valor válido");
+  }
+}); 
+
+
+
+
+
+// 🔹 Preparar encabezado antes de imprimir
+window.addEventListener("beforeprint", function () {
+
+  // Nombre del usuario (lo tomás tú como quieras)
+  document.getElementById("tituloImpresion").textContent =
+      `${"Jorgito"}, tu lista de compras:`;
+
+  // Fecha larga
+  const fecha = new Date();
+  const opciones = { weekday: "long", year: "numeric", month: "long", day: "numeric"};
+  const textoFecha = `${fecha.toLocaleDateString("es-ES", opciones)}, ${fecha.getHours()}:${fecha.getMinutes().toString().padStart(2, "0")}`;
+
+  document.getElementById("fechaImpresion").textContent = textoFecha;
+
+  // Total correcto
+  const totalReal = document.getElementById("totalChecklist").textContent || "0.00";
+  document.getElementById("totalImpresion").textContent =
+      `Lista de Compras — Total: ${totalReal}`;
+});
+
+
+  
+</script>
+
+
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').then(function(reg) {
+      console.log('Service Worker registrado con scope:', reg.scope);
+    }).catch(function(err) {
+      console.log('Error al registrar Service Worker:', err);
+    });
+  });
+}
+</script>
+</body>
+</html>
