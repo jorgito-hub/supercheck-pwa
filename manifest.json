@@ -2,7 +2,7 @@
   "name": "SuperCheck 🛒",
   "short_name": "SuperCheck",
   "description": "Lista de compras y checklist - SuperCheck",
-  "start_url": "index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
