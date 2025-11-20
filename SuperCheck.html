@@ -550,6 +550,58 @@
   }
 }
 
+/* 🔹 Ajustes RESPONSIVE para teléfonos */
+@media (max-width: 600px) {
+
+  body {
+    padding: 5px;
+    zoom: 1;
+  }
+
+  .container {
+    flex-direction: column !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .tabla-container,
+  .checklist-container {
+    width: 100% !important;
+    margin: 0;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  /* Tablas ajustables */
+  table {
+    font-size: 0.85em;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  th, td {
+    padding: 6px 8px !important;
+  }
+
+  /* Botones más cómodos en móvil */
+  button {
+    width: 100% !important;
+    margin-bottom: 8px;
+  }
+
+  .botones {
+    flex-direction: column;
+  }
+
+  /* Ajustar presupuesto flotante */
+  #presupuesto-flotante {
+    top: 8px;
+    right: 8px;
+    font-size: 1.2em;
+    padding: 6px 10px;
+  }
+}
 
 
 
@@ -562,9 +614,6 @@
 
 
 
-
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0d6efd">
 </head>
 <body>
 <div id="headerImpresion">
@@ -720,7 +769,20 @@
     </thead>
     <tbody></tbody>
   </table>
+  
+  <div class="botones" style="margin-top:15px;">
+  <button onclick="abrirModalExportarCarrito()">📤 Guardar Carrito</button>
+<input type="file" id="importarCarritoArchivo" accept=".json" onchange="importarCarrito(event)" style="display:none;">
+<button onclick="document.getElementById('importarCarritoArchivo').click()">📂 Subir Carrito</button>
+
+
 </div>
+
+  
+  
+</div>
+
+
 
   
   
@@ -754,6 +816,21 @@
     </div>
   </div>
 </div>
+
+
+<!-- 🔹 Modal de Exportación del Carrito -->
+<div id="modalExportarCarrito" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="cerrarModalExportarCarrito()">&times;</span>
+    <h3>¿Cómo quieres guardar el Carrito?</h3>
+    <div class="modal-botones">
+      <button class="btn-pdf" onclick="exportarPDFCarrito(); cerrarModalExportarCarrito();">📄 Carrito Final</button>
+      <button class="btn-json" onclick="exportarJSONCarrito(); cerrarModalExportarCarrito();">💾 Carrito Temporal</button>
+    </div>
+  </div>
+</div>
+
+
 
 
 <!-- 🔹 Modal Nuevo Producto -->
@@ -1214,6 +1291,7 @@ function exportarPDF() {
   // ============================================================
   const original = document.querySelector(".checklist-container");
   const clon = original.cloneNode(true);
+  
 
   // Limpiar títulos duplicados
   const tituloDoble = clon.querySelector("h3");
@@ -1227,9 +1305,14 @@ function exportarPDF() {
   wrapper.style.padding = "20px";
   wrapper.style.width = "100%";
 
-  wrapper.appendChild(encabezado); // insertamos encabezado limpio
-  wrapper.appendChild(clon);       // insertamos la tabla
+ const bloque = document.createElement("div");
+ bloque.style.pageBreakInside = "avoid";
+ bloque.style.width = "100%";
 
+ bloque.appendChild(encabezado);
+ bloque.appendChild(clon);
+
+ wrapper.appendChild(bloque);
   // ============================================================
   // 4. Limpiar tabla del clon
   // ============================================================
@@ -1258,8 +1341,14 @@ function exportarPDF() {
   if (totalesArriba) totalesArriba.remove();
 
   // Ajustar tabla para multipáginas
-  clon.querySelectorAll("table, tr, td, th").forEach(el => {
-    el.style.pageBreakInside = "avoid";
+// Ajustes para que NO SE CORTE NINGUNA FILA
+  // Evitar salto entre encabezado y tabla
+  bloque.style.pageBreakInside = "avoid";
+
+ // Pero permitir que las filas se dividan en páginas
+ clon.querySelector("table").style.pageBreakInside = "auto";
+ clon.querySelectorAll("tr").forEach(el => {
+    el.style.pageBreakInside = "auto";
     el.style.fontSize = "14px";
   });
 
@@ -1341,6 +1430,239 @@ function exportarJSON() {
     };
     lector.readAsText(archivo);
   }
+  
+  
+  
+  // ========================
+// MODAL DEL CARRITO
+// ========================
+function abrirModalExportarCarrito() {
+  document.getElementById("modalExportarCarrito").style.display = "block";
+}
+function cerrarModalExportarCarrito() {
+  document.getElementById("modalExportarCarrito").style.display = "none";
+}
+
+
+// ========================
+// EXPORTAR PDF DEL CARRITO
+// ========================
+function exportarPDFCarrito() {
+
+  // ============================================================
+  // 1. Crear encabezado limpio para el PDF (nombre + fecha + total)
+  // ============================================================
+  const encabezado = document.createElement("div");
+  encabezado.style.textAlign = "center";
+  encabezado.style.marginBottom = "20px";
+  encabezado.style.fontFamily = "Arial";
+
+  // Nombre del usuario
+  const nombre = document.createElement("h2");
+  nombre.textContent = `${usuarioActivo}, tu carrito de compras:`;
+  encabezado.appendChild(nombre);
+
+  // Fecha larga con hora
+  const fecha = new Date();
+  const opciones = {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  };
+  const fechaTxt = document.createElement("p");
+  fechaTxt.textContent = fecha.toLocaleDateString("es-ES", opciones);
+  encabezado.appendChild(fechaTxt);
+
+  // Total del carrito
+  const totalTxt = document.createElement("h3");
+  const totalActual = document.getElementById("totalCarrito").textContent;
+  totalTxt.textContent = `Carrito — Total: ${totalActual}`;
+  encabezado.appendChild(totalTxt);
+
+  // ============================================================
+  // 2. Clonamos solo la sección de la tabla CARRITO
+  // ============================================================
+  const original = document.querySelector("#tablaCarrito").parentElement;
+  const clon = original.cloneNode(true);
+
+  // ============================================================
+  // 3. Crear wrapper final para impresión
+  // ============================================================
+  const wrapper = document.createElement("div");
+  wrapper.style.textAlign = "center";
+  wrapper.style.padding = "20px";
+  wrapper.style.width = "100%";
+
+ const bloque = document.createElement("div");
+ bloque.style.pageBreakInside = "avoid";
+ bloque.style.width = "100%";
+
+ bloque.appendChild(encabezado);
+ bloque.appendChild(clon);
+
+ wrapper.appendChild(bloque);
+
+  // ============================================================
+  // 4. Limpiar tabla del clon
+  // ============================================================
+
+  // Ocultar columna "Retirar" (columna 5)
+  clon.querySelectorAll(
+    "th:nth-child(5), td:nth-child(5)"
+  ).forEach(el => el.style.display = "none");
+
+  // Quitar botones dentro de la tabla
+  clon.querySelectorAll("button").forEach(btn => btn.remove());
+
+  // Quitar buscadores o mensajes
+  const buscador = clon.querySelector(".buscar-container");
+  if (buscador) buscador.remove();
+
+  // Quitar contenedor de botones
+  const botones = clon.querySelector(".botones");
+  if (botones) botones.remove();
+
+  // Quitar total superior (ya está en encabezado)
+  const totalesArriba = clon.querySelector("h3");
+  if (totalesArriba) totalesArriba.remove();
+
+  // Quitar contenedor del cronómetro (si existe)
+  const cronometro = clon.querySelector("#contenedorCompras");
+  if (cronometro) cronometro.remove();
+
+  // Ajustes para que NO SE CORTE NINGUNA FILA
+  // Evitar salto entre encabezado y tabla
+  bloque.style.pageBreakInside = "avoid";
+
+ // Pero permitir que las filas se dividan en páginas
+ clon.querySelector("table").style.pageBreakInside = "auto";
+ clon.querySelectorAll("tr").forEach(el => {
+    el.style.pageBreakInside = "auto";
+    el.style.fontSize = "14px";
+    el.style.overflow = "visible";
+  });
+
+  clon.style.overflow = "visible";
+
+  // ============================================================
+  // 5. Insertar wrapper temporal en el body
+  // ============================================================
+  document.body.appendChild(wrapper);
+
+  // ============================================================
+  // 6. Configuración html2pdf
+  // ============================================================
+  const opt = {
+    margin: 10,
+    filename: "Carrito_SuperCheck.pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollY: 0,
+      windowWidth: document.body.scrollWidth
+    },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    pagebreak: { mode: ["css", "legacy"] }
+  };
+
+  // ============================================================
+  // 7. Generar PDF y limpiar wrapper
+  // ============================================================
+  html2pdf()
+    .set(opt)
+    .from(wrapper)
+    .save()
+    .then(() => wrapper.remove())
+    .catch(err => {
+      console.error("Error al generar PDF:", err);
+      wrapper.remove();
+    });
+}
+
+
+
+
+// ========================
+// EXPORTAR JSON DEL CARRITO
+// ========================
+function exportarJSONCarrito() {
+  const filas = document.querySelectorAll("#tablaCarrito tbody tr");
+  const datos = [];
+
+  filas.forEach(fila => {
+    const celdas = fila.querySelectorAll("td");
+    if (celdas.length >= 3) {
+      const producto = celdas[1].textContent.trim();
+      const precio = parseFloat(celdas[2].textContent.replace("C$", "").trim());
+      const cantidad = parseInt(fila.querySelector(".cantidad").value);
+      datos.push({ product: producto, price: precio, quantity: cantidad });
+    }
+  });
+
+  const blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
+  const enlace = document.createElement("a");
+  enlace.href = URL.createObjectURL(blob);
+  enlace.download = "Carrito_SuperCheck.json";
+  enlace.click();
+}
+
+ // ===================================
+// IMPORTAR CARRITO DESDE ARCHIVO JSON
+// ===================================
+function importarCarrito(event) {
+  const archivo = event.target.files[0];
+  if (!archivo) return;
+
+  const lector = new FileReader();
+
+  lector.onload = function(evt) {
+    try {
+      const data = JSON.parse(evt.target.result);
+
+      if (!Array.isArray(data)) {
+        alert("El archivo JSON no es válido.");
+        return;
+      }
+
+      // Limpia carrito actual
+      tablaCarrito.innerHTML = "";
+
+      // Reiniciar contadores
+      total = 0;
+      presupuesto = parseFloat(document.getElementById("presupuesto").textContent);
+      contador = 1;
+
+      data.forEach(item => {
+        if (!item.product || !item.price) return;
+        
+        // Volvemos a agregar el producto al carrito
+        agregarAlCarrito({ 
+          product: item.product, 
+          price: item.price / item.quantity 
+        }, item.quantity);
+      });
+
+      actualizarTotalCarrito();
+      actualizarColorPresupuesto();
+
+      alert("Carrito cargado correctamente.");
+
+    } catch (error) {
+      alert("Error leyendo el archivo JSON.");
+      console.error(error);
+    }
+  };
+
+  lector.readAsText(archivo);
+}
+ 
+  
+  
+  
   
   function actualizarTotalChecklist(cambio) {
   const totalElem = document.getElementById("totalChecklist");
@@ -1572,11 +1894,24 @@ function productoYaEnLista(nombreProducto) {
 
 
   
-// 🔹 Mostrar modal al cargar la página
 window.addEventListener("DOMContentLoaded", function () {
-  const modal = document.getElementById("modalPresupuesto");
-  modal.classList.add("show");
+
+  const hoy = new Date().toISOString().split("T")[0];
+  const fechaGuardada = localStorage.getItem("supercheck_presupuesto_fecha");
+  const presupuestoGuardado = localStorage.getItem("supercheck_presupuesto_valor");
+
+  // Si NO existe presupuesto o es un día diferente → mostrar modal
+  if (!fechaGuardada || fechaGuardada !== hoy) {
+    document.getElementById("modalPresupuesto").classList.add("show");
+  } else {
+    // Restaurar presupuesto automáticamente sin mostrar modal
+    presupuesto = Number(presupuestoGuardado);
+    document.getElementById("presupuesto").textContent = presupuesto;
+    actualizarColorPresupuesto();
+  }
+
 });
+
 
 // 🔹 Guardar presupuesto inicial
 document.getElementById("btnGuardarPresupuesto").addEventListener("click", function () {
@@ -1587,11 +1922,18 @@ document.getElementById("btnGuardarPresupuesto").addEventListener("click", funct
     presupuesto = valor;
     document.getElementById("presupuesto").textContent = presupuesto;
     actualizarColorPresupuesto();
+
+    // Guardar fecha del día para evitar mostrar el modal otra vez
+    const hoy = new Date().toISOString().split("T")[0];
+    localStorage.setItem("supercheck_presupuesto_fecha", hoy);
+    localStorage.setItem("supercheck_presupuesto_valor", presupuesto);
+
     document.getElementById("modalPresupuesto").classList.remove("show");
   } else {
     alert("Ingrese un valor válido");
   }
-}); 
+});
+
 
 
 
@@ -1618,22 +1960,93 @@ window.addEventListener("beforeprint", function () {
 });
 
 
+function guardarEstado() {
+    const lista = [];
+    const carrito = [];
+
+    document.querySelectorAll("#tablaChecklist tbody tr").forEach(f => {
+        const c = f.children;
+        lista.push({
+            product: c[1].textContent.trim(),
+            price: c[2].textContent.replace("C$", "").trim(),
+            quantity: f.querySelector(".cantidad") ? f.querySelector(".cantidad").value : 1
+        });
+    });
+
+    document.querySelectorAll("#tablaCarrito tbody tr").forEach(f => {
+        const c = f.children;
+        carrito.push({
+            product: c[1].textContent.trim(),
+            price: c[2].textContent.replace("C$", "").trim(),
+            quantity: f.querySelector(".cantidad") ? f.querySelector(".cantidad").value : 1
+        });
+    });
+
+    const hoy = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+    const estado = {
+        lista,
+        carrito,
+        presupuesto: document.getElementById("presupuesto").textContent,
+        usuario: usuarioActivo,
+        fecha: hoy
+    };
+
+    localStorage.setItem("supercheck_estado", JSON.stringify(estado));
+}
+
+function restaurarEstado() {
+    const data = localStorage.getItem("supercheck_estado");
+    if (!data) return;
+
+    const estado = JSON.parse(data);
+    const hoy = new Date().toISOString().split("T")[0];
+
+    // 🔥 Si es otro día → borrar todo
+    if (estado.fecha !== hoy) {
+        localStorage.removeItem("supercheck_estado");
+        return;
+    }
+
+    // Restaurar usuario
+    usuarioActivo = estado.usuario || "";
+
+    // Restaurar presupuesto
+    if (estado.presupuesto) {
+        document.getElementById("presupuesto").textContent = estado.presupuesto;
+    }
+
+    // Vaciar tablas
+    document.querySelector("#tablaChecklist tbody").innerHTML = "";
+    document.querySelector("#tablaCarrito tbody").innerHTML = "";
+
+    // Restaurar lista
+    estado.lista.forEach(item => {
+        agregarProducto(
+            { product: item.product, price: Number(item.price) / item.quantity },
+            Number(item.quantity)
+        );
+    });
+
+    // Restaurar carrito
+    estado.carrito.forEach(item => {
+        agregarAlCarrito(
+            { product: item.product, price: Number(item.price) / item.quantity },
+            Number(item.quantity)
+        );
+    });
+
+    actualizarTotalCarrito();
+    actualizarTotalChecklist(0);
+}
+
+setInterval(guardarEstado, 1500);
+window.addEventListener("DOMContentLoaded", restaurarEstado);
+
   
 </script>
 
 
 
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js').then(function(reg) {
-      console.log('Service Worker registrado con scope:', reg.scope);
-    }).catch(function(err) {
-      console.log('Error al registrar Service Worker:', err);
-    });
-  });
-}
-</script>
 </body>
 </html>
