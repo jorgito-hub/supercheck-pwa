@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+<!-- PWA MANIFEST -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d6efd">
+
+<!-- Compatibilidad móvil -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SuperCheck 🛒</title>
@@ -2042,6 +2050,23 @@ function restaurarEstado() {
 
 setInterval(guardarEstado, 1500);
 window.addEventListener("DOMContentLoaded", restaurarEstado);
+
+
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg) {
+        console.log('Service Worker registrado:', reg.scope);
+      })
+      .catch(function(error) {
+        console.log('Error al registrar el Service Worker:', error);
+      });
+  });
+}
+
+</script>
+
 
   
 </script>
