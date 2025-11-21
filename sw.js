@@ -1,5 +1,7 @@
-const CACHE_NAME = 'supercheck-cache-v3';
+const CACHE_NAME = 'supercheck-cache-v4'; // 👈 SUBIMOS VERSION
+
 const FILES_TO_CACHE = [
+  './',
   './index.html',
   './SuperCheck.html',
   './manifest.json',
@@ -7,33 +9,63 @@ const FILES_TO_CACHE = [
   './icons/icon-512.png'
 ];
 
-self.addEventListener('install', (evt) => {
-  evt.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+// INSTALACIÓN
+self.addEventListener('install', event => {
+  console.log('✅ SW v4 instalado - NUEVO EFECTO NIEVE');
+  
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(FILES_TO_CACHE);
     })
   );
-  self.skipWaiting();
+
+  self.skipWaiting(); // Fuerza actualización inmediata
 });
 
-self.addEventListener('activate', (evt) => {
-  evt.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          return caches.delete(key);
-        }
-      }));
+// ACTIVACIÓN
+self.addEventListener('activate', event => {
+  console.log('✅ SW v4 activado');
+
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log('🗑️ Borrando caché viejo:', key);
+            return caches.delete(key);
+          }
+        })
+      );
     })
   );
+
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (evt) => {
-  if (evt.request.method !== 'GET') return;
-  evt.respondWith(
-    caches.match(evt.request).then((response) => {
-      return response || fetch(evt.request).catch(() => caches.match('./index.html'));
+// FETCH - Priorizar red para HTML (evita bugs visuales)
+self.addEventListener('fetch', event => {
+
+  if (event.request.method !== 'GET') return;
+
+  // ✅ PARA HTML: SIEMPRE BUSCAR EN RED PRIMERO
+  if (event.request.headers.get('accept').includes('text/html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // ✅ PARA OTROS ARCHIVOS: CACHE FIRST
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
     })
   );
+
 });
