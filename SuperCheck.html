@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
-<!-- PWA MANIFEST -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0d6efd">
-
-<!-- Compatibilidad móvil -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SuperCheck 🛒</title>
@@ -2051,9 +2043,7 @@ function restaurarEstado() {
 setInterval(guardarEstado, 1500);
 window.addEventListener("DOMContentLoaded", restaurarEstado);
 
-
-
-if ('serviceWorker' in navigator) {
+ if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('sw.js')
       .then(function(reg) {
@@ -2063,15 +2053,94 @@ if ('serviceWorker' in navigator) {
         console.log('Error al registrar el Service Worker:', error);
       });
   });
-}
-
-</script>
-
-
+} 
+   
+  
   
 </script>
 
+ 
+<canvas id="snow"></canvas>
 
+<script>
+const canvas = document.getElementById("snow");
+const ctx = canvas.getContext("2d");
+
+let w = canvas.width = window.innerWidth;
+let h = canvas.height = window.innerHeight;
+
+let flakes = [];
+
+function createFlakes() {
+  flakes = [];
+  for (let i = 0; i < 200; i++) {
+    flakes.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 4 + 1,
+      d: Math.random() + 1
+    });
+  }
+}
+
+function drawFlakes() {
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  for (let i = 0; i < flakes.length; i++) {
+    let f = flakes[i];
+    ctx.moveTo(f.x, f.y);
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2, true);
+  }
+  ctx.fill();
+  moveFlakes();
+}
+
+let angle = 0;
+
+function moveFlakes() {
+  angle += 0.01;
+  for (let i = 0; i < flakes.length; i++) {
+    let f = flakes[i];
+    f.y += Math.pow(f.d, 2) + 1;
+    f.x += Math.sin(angle) * 2;
+
+    if (f.y > h) {
+      flakes[i] = {
+        x: Math.random() * w,
+        y: 0,
+        r: f.r,
+        d: f.d
+      };
+    }
+  }
+}
+
+function animateSnow() {
+  drawFlakes();
+  requestAnimationFrame(animateSnow);
+}
+
+createFlakes();
+animateSnow();
+
+window.addEventListener("resize", () => {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+  createFlakes();
+});
+</script>
+
+<style>
+#snow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+</style>
+  
 
 </body>
 </html>
