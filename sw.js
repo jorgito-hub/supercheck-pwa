@@ -1,4 +1,4 @@
-const CACHE_NAME = 'supercheck-cache-v1';
+const CACHE_NAME = 'supercheck-cache-v2';
 const FILES_TO_CACHE = [
   './index.html',
   './SuperCheck.html',
