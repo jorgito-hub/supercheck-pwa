@@ -1,4 +1,4 @@
-const CACHE_NAME = 'supercheck-cache-v4'; // 👈 SUBIMOS VERSION
+const CACHE_NAME = 'supercheck-cache-v5'; // 👈 SUBIMOS VERSION
 
 const FILES_TO_CACHE = [
   './',
